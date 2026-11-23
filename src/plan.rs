@@ -99,6 +99,10 @@ pub enum DiagnosticKind {
     LanguageUnresolved,
     /// A `language:` target had no artifacts supplied for it.
     NoArtifacts,
+    /// A byte-splice edit batch ([`crate::ByteEdit`]) failed validation —
+    /// overlap, out-of-bounds, or a non-char-boundary offset. The whole
+    /// artifact is skipped; a splice is never partially applied.
+    SpliceError,
 }
 
 /// One diagnostic: where, what kind, and why.

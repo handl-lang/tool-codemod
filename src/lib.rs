@@ -23,6 +23,12 @@
 //! - [`StatementSplitter`] / [`HandlStatementSplitter`] — top-level
 //!   statement chunking (vendored `plugin-ext-diag` algorithm; custom
 //!   surfaces plug their own).
+//! - [`ByteEdit`] / [`apply_byte_edits`] — the byte-splice path
+//!   (PL-004 T-091): computed edits (lint `--fix` payloads, formatter
+//!   output) bypass parse/rewrite/unparse and materialize directly as
+//!   `Change::Put`s via
+//!   [`CodemodEngine::plan_byte_edits`](engine::CodemodEngine::plan_byte_edits)
+//!   — same journaled apply/revert lifecycle, no AST round-trip.
 //!
 //! v1 scope notes (honest declines, never silent): `scope: program`
 //! rules are reported [`DiagnosticKind::ProgramScopeUnsupported`];
@@ -40,6 +46,7 @@ mod native;
 mod plan;
 mod rules;
 mod spec;
+mod splice;
 mod split;
 
 pub use contexts::{
@@ -53,4 +60,5 @@ pub use spec::{
     CodemodRewrite, CodemodRule, CodemodSpec, CodemodTarget, EngineErrorPolicy, RuleScope,
     SpecError, SpecIssue, UnparseMode,
 };
+pub use splice::{ByteEdit, SpliceError, apply_byte_edits};
 pub use split::{HandlStatementSplitter, StatementChunk, StatementSplitter, split_statements};

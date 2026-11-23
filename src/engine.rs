@@ -52,6 +52,7 @@ use crate::rules::{
     CODEMOD_PASS, CodemodRuleSource, CompiledRule, compile_rules, observe_matches, reachable_from,
 };
 use crate::spec::{CodemodSpec, CodemodTarget, EngineErrorPolicy, RuleScope, UnparseMode};
+use crate::splice::{ByteEdit, apply_byte_edits};
 use crate::split::{HandlStatementSplitter, StatementChunk, StatementSplitter};
 
 /// The artifacts one target covers — glob resolution is the caller's
@@ -286,6 +287,120 @@ impl<'s, S: ArtifactStore + ?Sized> CodemodEngine<'s, S> {
                 ))
         });
         Ok(plan)
+    }
+
+    /// Plan byte-splice edits for one artifact — the lint `--fix` path
+    /// (PL-004 T-091).
+    ///
+    /// Byte edits are *computed* desired-state, not spec rules: an
+    /// upstream producer (a lint pass's `fix` payloads, formatter
+    /// output, …) supplies [`ByteEdit`]s; this reads the artifact,
+    /// applies them via [`apply_byte_edits`], and emits the same
+    /// [`CodemodPlan`]/[`Change`] types the AST pipeline produces — so
+    /// `hnl-engine-codegen`'s apply/revert lifecycle journals,
+    /// drift-checks, and reverts the write with no special casing. No
+    /// parse, no `unparse` mode: the splice *is* the materialization.
+    ///
+    /// `ByteEdit::rule` is provenance only — it lands on
+    /// [`CodemodEdit::rule_id`]; `node_kind`/`rewrite` record
+    /// `""`/`"splice"` since no AST node is involved. A batch that
+    /// fails validation (overlap, out-of-bounds, non-char-boundary)
+    /// declines the whole artifact with a [`DiagnosticKind::SpliceError`]
+    /// diagnostic — never a partial splice, same policy as unparseable
+    /// artifacts.
+    ///
+    /// The returned plan carries `name: "byte-edits"`, `version: 0` —
+    /// there is no spec to take them from.
+    pub fn plan_byte_edits(&self, artifact: &ArtifactRef, edits: &[ByteEdit]) -> CodemodPlan {
+        let mut plan = CodemodPlan {
+            name: "byte-edits".into(),
+            version: 0,
+            edits: Vec::new(),
+            changes: Vec::new(),
+            diagnostics: Vec::new(),
+            stats: CodemodStats::default(),
+        };
+        if edits.is_empty() {
+            return plan;
+        }
+        plan.stats.artifacts_seen += 1;
+        plan.stats.edits += edits.len();
+
+        // --- read ---------------------------------------------------
+        let bytes = match self.store.read(artifact) {
+            Ok(Some(b)) => b,
+            Ok(None) => {
+                plan.diagnostics.push(
+                    CodemodDiagnostic::new(
+                        DiagnosticKind::ReadError,
+                        "artifact not found in store",
+                    )
+                    .at_artifact(artifact.clone()),
+                );
+                return plan;
+            }
+            Err(e) => {
+                plan.diagnostics.push(
+                    CodemodDiagnostic::new(DiagnosticKind::ReadError, e.to_string())
+                        .at_artifact(artifact.clone()),
+                );
+                return plan;
+            }
+        };
+        let source = match String::from_utf8(bytes.clone()) {
+            Ok(s) => s,
+            Err(_) => {
+                plan.diagnostics.push(
+                    CodemodDiagnostic::new(DiagnosticKind::NotUtf8, "artifact is not valid UTF-8")
+                        .at_artifact(artifact.clone()),
+                );
+                return plan;
+            }
+        };
+        let hash = ContentHash::of(&bytes);
+
+        // --- splice --------------------------------------------------
+        let text = match apply_byte_edits(&source, edits) {
+            Ok(t) => t,
+            Err(e) => {
+                plan.diagnostics.push(
+                    CodemodDiagnostic::new(DiagnosticKind::SpliceError, e.to_string())
+                        .at_artifact(artifact.clone()),
+                );
+                return plan;
+            }
+        };
+
+        // Edit records, sorted like the AST path's output.
+        let mut recs: Vec<&ByteEdit> = edits.iter().collect();
+        recs.sort_by_key(|e| (e.start, e.end, e.rule.as_str()));
+        for e in recs {
+            let span = Span {
+                start: e.start,
+                end: e.end,
+            };
+            plan.edits.push(CodemodEdit {
+                artifact: artifact.clone(),
+                rule_id: e.rule.clone(),
+                span: Some(span),
+                node_kind: String::new(),
+                before: snippet(&source, span),
+                after: Some(e.replacement.clone()),
+                deleted: false,
+                rewrite: Some("splice".into()),
+            });
+        }
+
+        // --- materialize ---------------------------------------------
+        if text != source {
+            plan.stats.artifacts_changed += 1;
+            plan.changes.push(Change::put_with_before(
+                artifact.clone(),
+                Some(hash),
+                text.into_bytes(),
+            ));
+        }
+        plan
     }
 
     /// One target: resolve language, compile rules, map artifacts.
