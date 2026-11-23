@@ -20,6 +20,6 @@ format does not change.
 
 ## Where it sits
 
-`engine-*` family, spec/model layer of the desired-state pipeline
+`tool-*` family, spec/model layer of the desired-state pipeline
 (PL-004). The rewrite engine, `plugin-codemod`, and `ext-codemod` build on
 this crate in later tasks.
