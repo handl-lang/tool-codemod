@@ -8,7 +8,7 @@
 //! should write. [`CodemodEngine::plan_byte_edits`](crate::CodemodEngine::plan_byte_edits)
 //! is the entry point — it reads the artifact, applies the edits, and
 //! emits the same [`CodemodPlan`]/[`Change`] types the AST pipeline
-//! produces, so `hnl-engine-codegen`'s apply/revert lifecycle journals,
+//! produces, so `hnl-tool-codegen`'s apply/revert lifecycle journals,
 //! drift-checks, and reverts the write with no special casing.
 //!
 //! This is deliberately *not* a spec rule kind: byte edits are computed
@@ -21,7 +21,7 @@ use serde::{Deserialize, Serialize};
 
 /// One byte-range splice against an artifact's UTF-8 source.
 ///
-/// The codemod-engine spelling of a lint fix: `hnl_engine_lint`'s
+/// The codemod-engine spelling of a lint fix: `hnl_tool_lint`'s
 /// `LintFixOut` carries `start`/`end`/`replacement`; `rule` is the
 /// producing rule's id (a lint rule name, `"fmt"`, …) kept for
 /// provenance — it lands verbatim on [`CodemodEdit::rule_id`](crate::CodemodEdit).

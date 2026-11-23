@@ -5,21 +5,21 @@
 //!
 //! The canonical `handl` `Language` comes from
 //! `handl-kit-data-prelude::assemble()` (dev-dep); the store is
-//! `engine-codegen`'s `MemoryStore`.
+//! `tool-codegen`'s `MemoryStore`.
 
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use handl_kit_data_prelude::assemble;
 use handl_language::{AstNode, AstRef, Language};
-use hnl_engine_codegen::{ArtifactRef, ArtifactStore, MemoryStore};
-use hnl_engine_codemod::{
+use hnl_tool_codegen::{ArtifactRef, ArtifactStore, MemoryStore};
+use hnl_tool_codemod::{
     CodemodEngine, CodemodError, CodemodRewrite, CodemodRule, CodemodSpec, CodemodTarget,
     DiagnosticKind, EngineContextError, EngineContextProvider, EngineContextReport,
     EngineContextRequest, EngineErrorPolicy, RuleScope, StaticLanguageResolver, TargetArtifacts,
     UnparseMode,
 };
-use hnl_engine_transform::native::{NativeRewrite, RewriteCtx};
+use hnl_tool_transform::native::{NativeRewrite, RewriteCtx};
 use serde_json::{Value, json};
 
 fn lang() -> Arc<Language> {
@@ -106,7 +106,7 @@ fn value99_rule() -> CodemodRule {
     )
 }
 
-fn change_text(plan: &hnl_engine_codemod::CodemodPlan, artifact: &str) -> String {
+fn change_text(plan: &hnl_tool_codemod::CodemodPlan, artifact: &str) -> String {
     let change = plan
         .changes
         .iter()

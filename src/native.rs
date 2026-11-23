@@ -1,7 +1,7 @@
 //! Native-rewrite dispatch for codemod rules.
 //!
 //! Codemod `rewrite:` names resolve through the same
-//! [`NativeRewrite`](hnl_engine_transform::native::NativeRewrite)
+//! [`NativeRewrite`](hnl_tool_transform::native::NativeRewrite)
 //! seam transform rules use — the engine holds no `handl:`/`native:`
 //! knowledge itself. Two layers are chained:
 //!
@@ -20,7 +20,7 @@
 use std::sync::Arc;
 
 use handl_language::{AstNode, AstRef};
-use hnl_engine_transform::native::{
+use hnl_tool_transform::native::{
     ChainedRewrite, NativeRewrite, NativeRewriteRegistry, RewriteCtx,
 };
 

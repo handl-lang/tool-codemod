@@ -1,4 +1,4 @@
-# bupha.toml — committed CI manifest for handl-lang/engine-codemod.
+# bupha.toml — committed CI manifest for handl-lang/tool-codemod.
 #
 # The runner is this repo's ci.sh (fmt -> clippy -D warnings -> test -> doc),
 # executed natively in a detached worktree of the pushed sha. Merge the
@@ -6,8 +6,8 @@
 # a dedicated instance with: bupha watch --config bupha.toml
 
 [[repos]]
-name = "handl-lang/engine-codemod"
-dir = "~/GitHub/handl-lang/engine-codemod"
+name = "handl-lang/tool-codemod"
+dir = "~/GitHub/handl-lang/tool-codemod"
 branch = "refs/heads/main"
   [repos.runner]
   kind = "script"

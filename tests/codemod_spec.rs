@@ -1,7 +1,7 @@
 //! Spec-model tests: representative `codemod.yaml`, defaults, and the
 //! validation pass.
 
-use hnl_engine_codemod::{
+use hnl_tool_codemod::{
     CodemodRewrite, CodemodSpec, EngineErrorPolicy, RuleScope, SpecError, UnparseMode,
 };
 

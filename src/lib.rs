@@ -1,9 +1,9 @@
-//! `hnl-engine-codemod` — the declarative codemod engine (P-002 /
+//! `hnl-tool-codemod` — the declarative codemod engine (P-002 /
 //! PL-004 Phase 2, tasks T-081–T-084).
 //!
 //! Pipeline: `Lift (raw parse) → Transform (declarative/native
 //! rewrite) → Materialize (preserve|full|none) → Change set`, over a
-//! generic `hnl_engine_codegen::ArtifactStore` and per-target
+//! generic `hnl_tool_codegen::ArtifactStore` and per-target
 //! `handl_language::Language` data — no language-specific kind logic
 //! lives here (ADR-0044/ADR-0081).
 //!
@@ -12,9 +12,9 @@
 //!   value).
 //! - [`CodemodEngine`] — `plan(spec, targets) -> CodemodPlan`: reads
 //!   artifacts, raw-parses statements (the ext-transform recipe), runs
-//!   compiled rules through `hnl-engine-transform-rewrite`, collects
-//!   [`CodemodEdit`]s, and materializes sorted `hnl_engine_codegen::Change`s
-//!   for `hnl-engine-codegen`'s apply/revert lifecycle.
+//!   compiled rules through `hnl-tool-transform-rewrite`, collects
+//!   [`CodemodEdit`]s, and materializes sorted `hnl_tool_codegen::Change`s
+//!   for `hnl-tool-codegen`'s apply/revert lifecycle.
 //! - [`LanguageResolver`] / [`StaticLanguageResolver`] — per-target
 //!   `language:` → `Language` resolution (caller-supplied; fragment
 //!   merging is plugin-side).

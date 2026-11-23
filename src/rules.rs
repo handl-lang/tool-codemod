@@ -1,4 +1,4 @@
-//! Compiling [`CodemodRule`]s into `hnl-engine-transform-rewrite`
+//! Compiling [`CodemodRule`]s into `hnl-tool-transform-rewrite`
 //! dispatch data.
 //!
 //! Each file-scope rule with a `rewrite:` becomes one or more
@@ -11,7 +11,7 @@
 //!   engine's `kind → rules` dispatch stays the only matcher.
 //! - `rewrite: "handl:<mod>.<fn>"` / `"native:<name>"` / bare name →
 //!   [`TransformRule::Native`] — resolved at run time by the wired
-//!   [`NativeRewrite`](hnl_engine_transform::native::NativeRewrite)
+//!   [`NativeRewrite`](hnl_tool_transform::native::NativeRewrite)
 //!   registry (`native:` is stripped; `handl:` passes through
 //!   verbatim for the host's `.hnl` resolver).
 //! - `rewrite: { delete: true }` → the internal
@@ -24,7 +24,7 @@
 //! path): they never enter the rewrite pass; their matches are
 //! collected by [`observe_matches`] — a plain arena walk evaluating the
 //! same `TransformCondition` vocabulary via
-//! [`matches_condition`](hnl_engine_transform::condition::matches_condition).
+//! [`matches_condition`](hnl_tool_transform::condition::matches_condition).
 //!
 //! `priority` carries the rule's declaration index so fire order is
 //! spec order (the `RuleSource`/`Dispatch` sort is `priority` then
@@ -35,8 +35,8 @@ use std::collections::BTreeSet;
 use handl_language::{
     Ast, AstNode, AstRef, Language, TransformCondition, TransformDef, TransformRule,
 };
-use hnl_engine_transform::condition::matches_condition;
-use hnl_engine_transform::source::RuleSource;
+use hnl_tool_transform::condition::matches_condition;
+use hnl_tool_transform::source::RuleSource;
 
 use crate::match_spec::CodemodMatch;
 use crate::native::DELETE_NATIVE;

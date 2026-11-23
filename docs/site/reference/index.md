@@ -19,7 +19,7 @@
 
 | crate | role |
 |---|---|
-| `hnl-engine-codemod` | spec/model layer — data only |
+| `hnl-tool-codemod` | spec/model layer — data only |
 
 ## Build and test
 

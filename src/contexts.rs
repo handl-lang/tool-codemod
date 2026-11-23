@@ -23,8 +23,8 @@
 //! matching it lands as a `Native` rewrite reading the report through
 //! the resolver layer, not as engine-core surgery.
 //!
-//! `hnl-engine-codemod` deliberately does **not** depend on
-//! `hnl-engine-typecheck` (that crate pulls host deps — engine→host is
+//! `hnl-tool-codemod` deliberately does **not** depend on
+//! `hnl-tool-typecheck` (that crate pulls host deps — engine→host is
 //! never legal). Typecheck wiring is a provider impl the plugin layer
 //! supplies; absent a provider, `requires: [typecheck]` is an honest
 //! "engine unavailable" governed by `on_engine_error`.
@@ -33,7 +33,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 
 use handl_language::Language;
-use hnl_engine_codegen::{ArtifactRef, ContentHash};
+use hnl_tool_codegen::{ArtifactRef, ContentHash};
 use serde_json::Value;
 
 /// Everything a provider needs to compute one artifact's context.

@@ -12,7 +12,7 @@
 //! - `ast` / `root` — the compacted arena and its root (`root: None`
 //!   means the whole statement subtree was deleted).
 //! - `old_to_new` — pre-compaction output index → post-compaction
-//!   index, so [`RewriteTrace`](hnl_engine_transform::output::RewriteTrace)
+//!   index, so [`RewriteTrace`](hnl_tool_transform::output::RewriteTrace)
 //!   `to` refs and the preserve-emitter `changed` set can be translated.
 //! - `shrank_parents` — pre-compaction indices of kept nodes that lost
 //!   tombstone children; they must be marked *changed* for

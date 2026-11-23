@@ -4,7 +4,7 @@
 //! A plan is **data**: edits describe what matched (artifact, source
 //! range, rule, before/after snippets); `changes` is the materialized
 //! [`Change`] set sorted by [`ArtifactRef`] — ready to hand to
-//! `hnl-engine-codegen`'s `Engine::plan`/`apply` for the reconcile
+//! `hnl-tool-codegen`'s `Engine::plan`/`apply` for the reconcile
 //! half (journal, manifest, drift checks live there, not here).
 //!
 //! ## `unparse: none` — the honest representation
@@ -18,7 +18,7 @@
 //! (Alternative considered — a `Change` with empty content — rejected:
 //! it would delete/truncate artifacts under the kernel's semantics.)
 
-use hnl_engine_codegen::{ArtifactRef, Change};
+use hnl_tool_codegen::{ArtifactRef, Change};
 use serde::{Deserialize, Serialize};
 
 /// One matched site — what a rule did (or would do) at one node.

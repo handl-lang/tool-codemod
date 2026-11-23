@@ -1,4 +1,4 @@
-# engine-codemod
+# tool-codemod
 
 The declarative codemod spec model: `codemod.yaml` targets and rules,
 parsed and validated — data only, no rewrite engine yet.
@@ -13,9 +13,9 @@ plan/apply/revert lifecycle over `ArtifactStore` arrive in later tasks.
 
 ## Start here
 
-- **Reference** — [public API](/engine-codemod/reference/)
-- **How-to** — [task recipes](/engine-codemod/how-to/)
-- **Explanation** — [design and rationale](/engine-codemod/explanation/)
+- **Reference** — [public API](/tool-codemod/reference/)
+- **How-to** — [task recipes](/tool-codemod/how-to/)
+- **Explanation** — [design and rationale](/tool-codemod/explanation/)
 
 No tutorials: this repo is a building block used from Rust. End-to-end
 walkthroughs live with the product that composes it — see the

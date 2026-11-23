@@ -29,18 +29,18 @@
 //! sorted edits) is already deterministic either way.
 //!
 //! Journal/manifest bookkeeping is *not* here: the returned
-//! [`Change`] set feeds `hnl-engine-codegen`'s `Engine::apply`, which
+//! [`Change`] set feeds `hnl-tool-codegen`'s `Engine::apply`, which
 //! owns write-ahead journaling, manifests, and revert.
 
 use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
 use handl_language::{Ast, AstRef, Language};
-use hnl_engine_codegen::{ArtifactRef, ArtifactStore, Change, ContentHash};
-use hnl_engine_fmt::{FormatEngine, PreserveEmitter};
-use hnl_engine_parse::ParserEngine;
-use hnl_engine_transform::native::NativeRewrite;
-use hnl_engine_transform_rewrite::RewriteEngine;
+use hnl_tool_codegen::{ArtifactRef, ArtifactStore, Change, ContentHash};
+use hnl_tool_fmt::{FormatEngine, PreserveEmitter};
+use hnl_tool_parse::ParserEngine;
+use hnl_tool_transform::native::NativeRewrite;
+use hnl_tool_transform_rewrite::RewriteEngine;
 
 use crate::compact::strip_tombstones;
 use crate::contexts::{EngineContextCache, EngineContextProvider, context_for};
@@ -297,7 +297,7 @@ impl<'s, S: ArtifactStore + ?Sized> CodemodEngine<'s, S> {
     /// output, …) supplies [`ByteEdit`]s; this reads the artifact,
     /// applies them via [`apply_byte_edits`], and emits the same
     /// [`CodemodPlan`]/[`Change`] types the AST pipeline produces — so
-    /// `hnl-engine-codegen`'s apply/revert lifecycle journals,
+    /// `hnl-tool-codegen`'s apply/revert lifecycle journals,
     /// drift-checks, and reverts the write with no special casing. No
     /// parse, no `unparse` mode: the splice *is* the materialization.
     ///
@@ -676,12 +676,12 @@ impl<'s, S: ArtifactStore + ?Sized> CodemodEngine<'s, S> {
         chunk: &StatementChunk,
     ) -> Result<Option<handl_language::Ast>, String> {
         let tokens =
-            hnl_engine_lex_pattern::lex(lang, &chunk.text).map_err(|e| format!("lex: {e}"))?;
+            hnl_tool_lex_pattern::lex(lang, &chunk.text).map_err(|e| format!("lex: {e}"))?;
         if tokens.as_slice().is_empty() {
             return Ok(None);
         }
-        let req = hnl_engine_parse::ParserRequest::new(tokens);
-        let mut ast = hnl_engine_parse_pratt::PrattEngine::new()
+        let req = hnl_tool_parse::ParserRequest::new(tokens);
+        let mut ast = hnl_tool_parse_pratt::PrattEngine::new()
             .parse(lang, &req)
             .map_err(|e| format!("parse: {e}"))?;
         if ast.is_empty() {

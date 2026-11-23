@@ -1,6 +1,6 @@
-# engine-codemod
+# tool-codemod
 
-`hnl-engine-codemod` — the declarative codemod engine's **spec/model layer**
+`hnl-tool-codemod` — the declarative codemod engine's **spec/model layer**
 (proposal P-002, plan PL-004 Phase 2).
 
 This crate defines the `codemod.yaml` document: `targets[]`

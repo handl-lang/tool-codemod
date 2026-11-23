@@ -12,7 +12,7 @@ engine evolve without touching spec parsing.
 ## Why zero kernel deps
 
 The spec model deliberately does not depend on `handl-language` or
-`hnl-engine-codegen`: `language` stays a `String` resolved per target by
+`hnl-tool-codegen`: `language` stays a `String` resolved per target by
 the plugin layer (ADR-0044 — a new language is a data change), and `match`
 stays an opaque `serde_json::Value` carrying the `TransformCondition`
 serde shape. The engine binds the real types when it lands; the spec

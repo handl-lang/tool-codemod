@@ -1,12 +1,12 @@
 //! Byte-splice path tests (PL-004 T-091): `ByteEdit`s — the shape lint
-//! `--fix` diagnostics take once mapped through `hnl-engine-lint`'s
+//! `--fix` diagnostics take once mapped through `hnl-tool-lint`'s
 //! `fix` module — become `Change::Put`s via
 //! `CodemodEngine::plan_byte_edits`, then flow through
-//! `hnl-engine-codegen`'s `Engine::apply`/`revert` lifecycle: journaled,
+//! `hnl-tool-codegen`'s `Engine::apply`/`revert` lifecycle: journaled,
 //! drift-checked, revertable.
 
-use hnl_engine_codegen::{ApplyOptions, ArtifactRef, ArtifactStore, Engine, MemoryStore, RunMeta};
-use hnl_engine_codemod::{ByteEdit, CodemodEngine, DiagnosticKind};
+use hnl_tool_codegen::{ApplyOptions, ArtifactRef, ArtifactStore, Engine, MemoryStore, RunMeta};
+use hnl_tool_codemod::{ByteEdit, CodemodEngine, DiagnosticKind};
 
 fn store_with(entries: &[(&str, &str)]) -> MemoryStore {
     let store = MemoryStore::new();
@@ -123,7 +123,7 @@ fn fixes_flow_through_apply_and_revert() {
 
     // apply through the codegen lifecycle
     let engine = Engine::new(&store);
-    let mut meta = RunMeta::new("lint-fix", "hnl-engine-lint-0.1");
+    let mut meta = RunMeta::new("lint-fix", "hnl-tool-lint-0.1");
     let run_id = meta.new_run_id();
     let report = engine
         .apply(&plan.changes, None, &meta, &ApplyOptions::default())
@@ -154,7 +154,7 @@ fn apply_expected(src: &str, edits: &[ByteEdit]) -> String {
 fn lint_fix_out_shape_maps_directly() {
     // The documented host-side mapping: `LintFixOut { start, end,
     // replacement }` + the diagnostic's `rule` name → `ByteEdit`.
-    let fix = hnl_engine_codemod::ByteEdit {
+    let fix = hnl_tool_codemod::ByteEdit {
         start: 0,
         end: 3,
         replacement: String::new(),

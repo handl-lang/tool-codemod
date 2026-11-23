@@ -6,7 +6,7 @@ repos it patches.
 ## Load a codemod spec
 
 ```rust
-let spec = hnl_engine_codemod::CodemodSpec::load("codemod.yaml")?;
+let spec = hnl_tool_codemod::CodemodSpec::load("codemod.yaml")?;
 ```
 
 `load`/`parse` run validation; use `from_yaml` + `validate` separately when
