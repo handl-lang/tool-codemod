@@ -14,6 +14,49 @@ categories = ["compilers", "development-tools"]
 publish = false
 
 [dependencies]
+handl-language = { git = "https://github.com/handl-lang/kernel", branch = "main" }
+hnl-engine-codegen = { path = "../engine-codegen" }
+hnl-engine-fmt = { git = "https://github.com/handl-lang/engine-fmt", branch = "main" }
+hnl-engine-lex-pattern = { git = "https://github.com/handl-lang/engine-lex-pattern", branch = "main" }
+hnl-engine-parse = { git = "https://github.com/handl-lang/engine-parse", branch = "main" }
+hnl-engine-parse-pratt = { git = "https://github.com/handl-lang/engine-parse-pratt", branch = "main" }
+hnl-engine-transform = { git = "https://github.com/handl-lang/engine-transform", branch = "main" }
+hnl-engine-transform-rewrite = { git = "https://github.com/handl-lang/engine-transform-rewrite", branch = "main" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"
+
+[dev-dependencies]
+handl-kit-data-prelude = { git = "https://github.com/handl-lang/host", branch = "main" }
+
+# ADR-0128 §Resolution convention: the sibling checkout wins locally;
+# CI resolves the `branch = "main"` git deps.
+[patch."https://github.com/handl-lang/kernel"]
+handl-language = { path = "../kernel/crates/handl-language" }
+handl-calculus = { path = "../kernel/crates/handl-calculus" }
+handl-value = { path = "../kernel/crates/handl-value" }
+
+[patch."https://github.com/handl-lang/engine-transform"]
+hnl-engine-transform = { path = "../engine-transform" }
+
+[patch."https://github.com/handl-lang/engine-transform-rewrite"]
+hnl-engine-transform-rewrite = { path = "../engine-transform-rewrite" }
+
+[patch."https://github.com/handl-lang/engine-fmt"]
+hnl-engine-fmt = { path = "../engine-fmt" }
+
+[patch."https://github.com/handl-lang/engine-lex"]
+hnl-engine-lex = { path = "../engine-lex" }
+
+[patch."https://github.com/handl-lang/engine-lex-pattern"]
+hnl-engine-lex-pattern = { path = "../engine-lex-pattern" }
+
+[patch."https://github.com/handl-lang/engine-parse"]
+hnl-engine-parse = { path = "../engine-parse" }
+
+[patch."https://github.com/handl-lang/engine-parse-pratt"]
+hnl-engine-parse-pratt = { path = "../engine-parse-pratt" }
+
+[patch."https://github.com/handl-lang/host"]
+handl-plugin-ext-diag = { path = "../host/crates/plugin-ext-diag" }
+handl-kit-data-prelude = { path = "../host/crates/handl-kit-data-prelude" }
