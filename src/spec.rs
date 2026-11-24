@@ -215,7 +215,11 @@ pub struct CodemodRule {
     /// `PayloadEq`, `ChildPayloadEq`, `ChildCount`, `AttrEq`, `SameAttr`,
     /// `And`, `Or`, `Not`), kept as a [`serde_json::Value`] so this crate
     /// stays kernel-free. The rewrite engine binds it to the real
-    /// `TransformCondition` type. `None` = the rule is unconditional.
+    /// `TransformCondition` type; `*PayloadEq` values additionally
+    /// accept the `{"$prefix"|"$suffix"|"$contains": "<lit>"}` string
+    /// operators `hnl-tool-transform`'s `payload_eq` documents (there is
+    /// no `$regex` — patterns are affix/substring only). `None` = the
+    /// rule is unconditional.
     #[serde(rename = "match", default)]
     pub condition: Option<Value>,
     /// What fires when the rule matches. `None` = the rule only emits

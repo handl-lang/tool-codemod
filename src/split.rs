@@ -13,9 +13,15 @@
 //! default — a port of the shared `plugin-ext-diag::split_statements`
 //! implementation (the same convention the bootstrap typechecker,
 //! linter, and test runner use) for the canonical language's surface
-//! (`--` comments, `"…"` strings, newline/`;` separators). A language
+//! (`--` comments, `"…"` strings, newline/`;` separators), plus the
+//! `.hnl` module *declaration lines* (`cap`/`op`/`handl` contract
+//! declarations and their indented `guarantee:`/`requires:`/
+//! `termination:` continuations) that the module loader strips before
+//! parsing — see [`mask_declaration_lines`]. A language
 //! whose surface differs supplies its own splitter via
 //! [`CodemodEngine::with_statement_splitter`](crate::CodemodEngine::with_statement_splitter).
+
+use std::borrow::Cow;
 
 /// A top-level statement chunk: its trimmed text and byte offset in the
 /// original source.
@@ -62,8 +68,105 @@ pub struct HandlStatementSplitter;
 
 impl StatementSplitter for HandlStatementSplitter {
     fn split(&self, src: &str) -> Vec<StatementChunk> {
-        split_statements(src)
+        // `.hnl` module sources carry contract-declaration lines
+        // (`cap "…"`, `op "…" : Sig`, `handl …`, plus indented
+        // `guarantee:`/`requires:`/`termination:` continuations) that
+        // are *not* grammar statements — the module loader strips them
+        // before parsing (`handl-runtime`
+        // `module_prep::strip_declaration_lines`; the contract dialect
+        // is parsed separately by `plugin-ext-refinement`). Mask them
+        // to whitespace — byte-length preserving, so every chunk offset
+        // still indexes the original source for preserve-mode splices —
+        // run the boundary scan on the mask, then re-slice each chunk's
+        // text from `src`. A masked declaration line is indistinguishable
+        // from a blank line to the splitter, so it can never become a
+        // chunk: it lands in the inter-statement gaps `assemble` copies
+        // verbatim.
+        let masked = mask_declaration_lines(src);
+        let mut chunks = split_statements(&masked);
+        if matches!(masked, Cow::Borrowed(_)) {
+            return chunks; // no declaration lines — text already verbatim
+        }
+        for chunk in &mut chunks {
+            // The mask only steered boundary detection; chunk text must
+            // be the real statement bytes. `chunk.text.len()` is the
+            // masked trimmed span, which is byte-identical in length to
+            // the original span (masking is 1:1 per byte), so the same
+            // `[offset, offset + len)` window slices `src`.
+            let end = chunk.offset + chunk.text.len();
+            chunk.text = src[chunk.offset..end].to_string();
+        }
+        chunks
     }
+}
+
+/// Whether `line` is a `.hnl` module declaration line the loader strips
+/// before parsing — a byte-faithful port of the `keep` predicate in
+/// `handl-runtime`'s `module_prep::strip_declaration_lines_mapped`
+/// (vendored like `split_statements` itself: this engine keeps zero
+/// host deps, and these are *surface* keywords of the canonical module
+/// syntax — the same category as the `--`/`;`/`from`/`import`
+/// conventions already hardcoded here, not AST kind strings).
+///
+/// Quirks mirrored deliberately: `cap`/`op`/`handl` match after leading
+/// whitespace with a keyword boundary (`op"…"` counts, `opcode` does
+/// not); `guarantee`/`requires`/`termination` match as *prefixes* on
+/// indented lines only.
+fn is_declaration_line(line: &str) -> bool {
+    let trimmed = line.trim_start();
+    if line.starts_with(' ') || line.starts_with('\t') {
+        for kw in ["guarantee", "requires", "termination"] {
+            if trimmed.starts_with(kw) {
+                return true;
+            }
+        }
+    }
+    for kw in ["cap", "op", "handl"] {
+        if let Some(rest) = trimmed.strip_prefix(kw)
+            && (rest.is_empty()
+                || rest.starts_with(' ')
+                || rest.starts_with('\t')
+                || rest.starts_with('"'))
+        {
+            return true;
+        }
+    }
+    false
+}
+
+/// Replace every declaration line's content with spaces, preserving
+/// `\n` and total byte length — the offset-preserving equivalent of the
+/// loader's `strip_declaration_lines`. Returns [`Cow::Borrowed`] when
+/// the source has no declaration lines (the common case).
+///
+/// Each *char* becomes `len_utf8()` spaces so the mask stays valid
+/// UTF-8 at identical byte length; only `\n` survives inside a masked
+/// line.
+fn mask_declaration_lines(src: &str) -> Cow<'_, str> {
+    if !src.lines().any(is_declaration_line) {
+        return Cow::Borrowed(src);
+    }
+    let mut masked = String::with_capacity(src.len());
+    for line in src.split_inclusive('\n') {
+        let (body, newline) = match line.strip_suffix('\n') {
+            Some(b) => (b, "\n"),
+            None => (line, ""),
+        };
+        // Test the line the way `str::lines` yields it (no `\n`, no
+        // trailing `\r`) so the fast-path scan and this loop agree.
+        let test = body.strip_suffix('\r').unwrap_or(body);
+        if is_declaration_line(test) {
+            for ch in body.chars() {
+                for _ in 0..ch.len_utf8() {
+                    masked.push(' ');
+                }
+            }
+            masked.push_str(newline);
+        } else {
+            masked.push_str(line);
+        }
+    }
+    Cow::Owned(masked)
 }
 
 /// Split `src` into top-level statement chunks (canonical surface).
@@ -268,5 +371,78 @@ mod tests {
         let chunks = texts(src);
         assert_eq!(chunks.len(), 2);
         assert!(chunks[0].1.contains("a +"));
+    }
+
+    // -- declaration-line masking (module_prep parity) -----------------
+
+    fn handl_texts(src: &str) -> Vec<(usize, String)> {
+        HandlStatementSplitter
+            .split(src)
+            .into_iter()
+            .map(|c| (c.offset, c.text))
+            .collect()
+    }
+
+    #[test]
+    fn declaration_lines_are_not_chunks_but_keep_offsets() {
+        // The lib-otlp contract-declaration shape: `cap` lines, `op`
+        // signature lines, and indented `guarantee:` continuations.
+        let src = concat!(
+            "cap \"otlp.configure\"\n",
+            "op \"otlp.configure\" : Value -> Value\n",
+            "  guarantee: True\n",
+            "\n",
+            "from \"otlp_c\" import * as otlp_c\n",
+            "\n",
+            "do {\n",
+            "  { configure: (url) ~> url }\n",
+            "}\n",
+        );
+        let chunks = handl_texts(src);
+        assert_eq!(chunks.len(), 2, "chunks: {chunks:?}");
+        assert!(chunks[0].1.starts_with("from \"otlp_c\" import"));
+        assert!(chunks[1].1.starts_with("do {"));
+        // Offsets index the *original* source: the import's offset is
+        // past every declaration line.
+        assert_eq!(
+            &src[chunks[0].0..chunks[0].0 + chunks[0].1.len()],
+            chunks[0].1
+        );
+        assert!(chunks[0].0 > src.find("guarantee").unwrap());
+    }
+
+    #[test]
+    fn declaration_keywords_need_a_boundary() {
+        // `opcode`/`capital` are ordinary identifiers, not declarations.
+        let src = "opcode = 1\ncapital = 2\nhandlheld = 3";
+        let chunks = handl_texts(src);
+        assert_eq!(chunks.len(), 3);
+    }
+
+    #[test]
+    fn unindented_guarantee_is_not_a_declaration() {
+        // Only *indented* guarantee/requires/termination lines are
+        // continuations — mirroring strip_declaration_lines.
+        let src = "guarantee: True\nx = 1";
+        let chunks = handl_texts(src);
+        assert_eq!(chunks.len(), 2);
+    }
+
+    #[test]
+    fn declaration_mask_preserves_byte_offsets_for_splices() {
+        // Every chunk offset must be a char boundary in the original
+        // and the masked span must be byte-identical in length — the
+        // property preserve-mode splicing relies on.
+        let src = "op \"ns.f\" : (Value * String) -> Value\n  requires: True\nx = 1\n";
+        let masked = mask_declaration_lines(src);
+        assert_eq!(masked.len(), src.len());
+        for chunk in HandlStatementSplitter.split(src) {
+            assert!(src.is_char_boundary(chunk.offset));
+            assert!(src.is_char_boundary(chunk.offset + chunk.text.len()));
+            assert_eq!(
+                &src[chunk.offset..chunk.offset + chunk.text.len()],
+                chunk.text
+            );
+        }
     }
 }

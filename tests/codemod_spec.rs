@@ -29,7 +29,7 @@ rules:
     on_engine_error: fail
     match:
       Or:
-        - PayloadEq: { path: "name", value: { $regex: "deprecated_.*" } }
+        - PayloadEq: { path: "name", value: { $prefix: "deprecated_" } }
         - AnyChildKind: { kind: "deprecated-call" }
     rewrite: { delete: true }
 "#;
