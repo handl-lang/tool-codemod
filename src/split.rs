@@ -338,26 +338,26 @@ mod tests {
 
     #[test]
     fn splits_on_newlines_and_semicolons() {
-        let src = "x = 1\ny = 2;\nz = 3";
+        let src = "x := 1\ny := 2;\nz := 3";
         let chunks = texts(src);
         assert_eq!(chunks.len(), 3);
-        assert_eq!(chunks[0].1, "x = 1");
-        assert_eq!(chunks[1].1, "y = 2");
-        assert_eq!(chunks[2].1, "z = 3");
+        assert_eq!(chunks[0].1, "x := 1");
+        assert_eq!(chunks[1].1, "y := 2");
+        assert_eq!(chunks[2].1, "z := 3");
     }
 
     #[test]
     fn keeps_bracketed_newlines_together() {
-        let src = "f(\n  a,\n  b\n)\nnext = 1";
+        let src = "f(\n  a,\n  b\n)\nnext := 1";
         let chunks = texts(src);
         assert_eq!(chunks.len(), 2);
         assert!(chunks[0].1.contains("f("));
-        assert_eq!(chunks[1].1, "next = 1");
+        assert_eq!(chunks[1].1, "next := 1");
     }
 
     #[test]
     fn drops_boundary_comments_keeps_trailing() {
-        let src = "-- file header\nx = 1 -- trailing\ny = 2";
+        let src = "-- file header\nx := 1 -- trailing\ny := 2";
         let chunks = texts(src);
         assert_eq!(chunks.len(), 2);
         assert!(chunks[0].1.contains("-- trailing"));
@@ -367,7 +367,7 @@ mod tests {
     fn does_not_split_mid_expression() {
         // `x = a +` cannot end a statement — the newline is not a
         // boundary.
-        let src = "x = a +\n  b\ny = 2";
+        let src = "x := a +\n  b\ny := 2";
         let chunks = texts(src);
         assert_eq!(chunks.len(), 2);
         assert!(chunks[0].1.contains("a +"));
@@ -414,7 +414,7 @@ mod tests {
     #[test]
     fn declaration_keywords_need_a_boundary() {
         // `opcode`/`capital` are ordinary identifiers, not declarations.
-        let src = "opcode = 1\ncapital = 2\nhandlheld = 3";
+        let src = "opcode := 1\ncapital := 2\nhandlheld := 3";
         let chunks = handl_texts(src);
         assert_eq!(chunks.len(), 3);
     }
@@ -423,7 +423,7 @@ mod tests {
     fn unindented_guarantee_is_not_a_declaration() {
         // Only *indented* guarantee/requires/termination lines are
         // continuations — mirroring strip_declaration_lines.
-        let src = "guarantee: True\nx = 1";
+        let src = "guarantee: True\nx := 1";
         let chunks = handl_texts(src);
         assert_eq!(chunks.len(), 2);
     }
@@ -433,7 +433,7 @@ mod tests {
         // Every chunk offset must be a char boundary in the original
         // and the masked span must be byte-identical in length — the
         // property preserve-mode splicing relies on.
-        let src = "op \"ns.f\" : (Value * String) -> Value\n  requires: True\nx = 1\n";
+        let src = "op \"ns.f\" : (Value * String) -> Value\n  requires: True\nx := 1\n";
         let masked = mask_declaration_lines(src);
         assert_eq!(masked.len(), src.len());
         for chunk in HandlStatementSplitter.split(src) {

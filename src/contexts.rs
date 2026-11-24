@@ -188,7 +188,7 @@ mod tests {
         providers.insert("typecheck".to_string(), provider.clone());
         let mut cache = EngineContextCache::new();
         let art = ArtifactRef::new("a.hnl");
-        let hash = ContentHash::of(b"x = 1");
+        let hash = ContentHash::of(b"x := 1");
         let lang = Language::new();
 
         for _ in 0..3 {
@@ -197,7 +197,7 @@ mod tests {
                 &mut cache,
                 &art,
                 hash,
-                "x = 1",
+                "x := 1",
                 &lang,
                 "typecheck",
             )
@@ -210,13 +210,13 @@ mod tests {
         );
 
         // A different artifact hash recomputes.
-        let hash2 = ContentHash::of(b"y = 2");
+        let hash2 = ContentHash::of(b"y := 2");
         context_for(
             &providers,
             &mut cache,
             &art,
             hash2,
-            "y = 2",
+            "y := 2",
             &lang,
             "typecheck",
         )
@@ -224,6 +224,6 @@ mod tests {
         assert_eq!(*provider.calls.lock().unwrap(), 2);
 
         // A missing provider is an honest error, not a panic.
-        assert!(context_for(&providers, &mut cache, &art, hash, "x = 1", &lang, "nope").is_err());
+        assert!(context_for(&providers, &mut cache, &art, hash, "x := 1", &lang, "nope").is_err());
     }
 }
