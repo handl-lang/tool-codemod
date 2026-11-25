@@ -2,6 +2,7 @@
 name = "hnl-tool-codemod"
 version = "0.1.0"
 edition = "2024"
+rust-version = "1.85"
 description = "Declarative codemod spec model (codemod.yaml): targets, rules, and the plan/apply/revert lifecycle data (proposal P-002, plan PL-004)."
 license = "MIT"
 repository = "https://github.com/handl-lang/tool-codemod"
